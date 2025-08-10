@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Custom Invoice-Style Layout Template -->
+    <template id="external_layout_simple" name="Simple Layout">
+        <t t-call="web.html_container">
+            <t t-set="body_classname" t-value="'o_custom_invoice_layout'"/>
+            
+            <!-- HEADER -->
+            <div class="header custom-header">
+                <div class="container-fluid">
+                    <div class="row">
+                        <!-- Logo Section -->
+                        <div class="col-6">
+                            <div class="logo-section">
+                                <div class="logo-placeholder">
+                                    <img t-if="company.logo"
+                                         t-att-src="image_data_uri(company.logo)"
+                                         class="company-logo"
+                                         alt="Company Logo"/>
+                                    <!-- Softspace Static Logo -->
+                                    <img t-if="not company.logo"
+                                         src="/custom_invoice_layout/static/img/softspace.webp"
+                                         class="company-logo"
+                                         alt="Softspace Logo"/>
+                                    <div t-if="not company.logo" class="default-logo" style="display: none;">
+                                        <i class="fa fa-camera"></i>
+                                        <span>Your logo</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Company Info Section -->
+                        <div class="col-6 text-right">
+                            <div class="company-info-header">
+                                <div class="company-name" t-field="company.name"/>
+                                <div t-if="company.partner_id.country_id" class="company-country" t-field="company.partner_id.country_id.name"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- CUSTOMER/PARTNER SECTION -->
+            <div class="customer-section">
+                <div class="container-fluid">
+                    <div t-if="o and o.partner_id" class="customer-details">
+                        <div class="customer-name" t-field="o.partner_id.name"/>
+                        <div t-if="o.partner_id.street" class="address-line" t-field="o.partner_id.street"/>
+                        <div t-if="o.partner_id.city or o.partner_id.state_id or o.partner_id.zip" class="address-line">
+                            <span t-if="o.partner_id.city" t-field="o.partner_id.city"/>
+                            <span t-if="o.partner_id.state_id" t-field="o.partner_id.state_id.code"/>
+                            <span t-if="o.partner_id.zip" t-field="o.partner_id.zip"/>
+                        </div>
+                        <div t-if="o.partner_id.country_id" class="address-line" t-field="o.partner_id.country_id.name"/>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- DOCUMENT TITLE SECTION -->
+            <div class="invoice-title-section">
+                <div class="container-fluid">
+                    <h1 t-if="o and o.name" class="invoice-title">
+                        <!-- Dynamic title based on document type -->
+                        <span t-if="o and o._name == 'account.move' and o.move_type == 'out_invoice'">Invoice</span>
+                        <span t-elif="o and o._name == 'sale.order'">Sales Order</span>
+                        <span t-else="">Document</span>
+                        <span t-field="o.name"/>
+                    </h1>
+                </div>
+            </div>
+            
+            <!-- DOCUMENT DETAILS SECTION -->
+            <div class="invoice-details-section">
+                <div class="container-fluid">
+                    <div class="row">
+                        <!-- Document Date -->
+                        <div class="col-6">
+                            <div class="detail-box">
+                                <div class="detail-label">
+                                    <span t-if="o and o._name == 'account.move'">Invoice Date</span>
+                                    <span t-elif="o and o._name == 'sale.order'">Order Date</span>
+                                    <span t-else="">Date</span>
+                                </div>
+                                <div class="detail-value">
+                                    <!-- For invoices -->
+                                    <span t-if="o and o._name == 'account.move' and o.invoice_date" t-field="o.invoice_date"/>
+                                    <!-- For sale orders -->
+                                    <span t-elif="o and o._name == 'sale.order' and o.date_order" t-field="o.date_order"/>
+                                    <!-- Fallback -->
+                                    <span t-else="">N/A</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Due Date / Validity -->
+                        <div class="col-6">
+                            <div class="detail-box">
+                                <div class="detail-label">
+                                    <span t-if="o and o._name == 'account.move'">Due Date</span>
+                                    <span t-elif="o and o._name == 'sale.order'">Valid Until</span>
+                                    <span t-else="">Due Date</span>
+                                </div>
+                                <div class="detail-value">
+                                    <!-- For invoices -->
+                                    <span t-if="o and o._name == 'account.move' and o.invoice_date_due" t-field="o.invoice_date_due"/>
+                                    <!-- For sale orders -->
+                                    <span t-elif="o and o._name == 'sale.order' and o.validity_date" t-field="o.validity_date"/>
+                                    <!-- Fallback -->
+                                    <span t-else="">N/A</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- CONTENT -->
+            <div class="article o_report_layout_standard">
+                <t t-raw="0"/>
+            </div>
+            
+            <!-- PAYMENT TERMS SECTION -->
+            <div class="payment-section">
+                <div class="container-fluid">
+                    <!-- Payment Terms -->
+                    <div class="payment-terms">
+                        <span t-if="o and o._name == 'account.move' and o.invoice_payment_term_id">
+                            Payment terms: <span t-field="o.invoice_payment_term_id.name"/>
+                        </span>
+                        <span t-elif="o and o._name == 'sale.order' and o.payment_term_id">
+                            Payment terms: <span t-field="o.payment_term_id.name"/>
+                        </span>
+                    </div>
+                    
+                    <!-- Payment Communication -->
+                    <div class="payment-communication">
+                        <span t-if="o and o.name">
+                            <span t-if="o._name == 'account.move'">Payment Communication: </span>
+                            <span t-elif="o._name == 'sale.order'">Reference: </span>
+                            <span t-field="o.name"/>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- FOOTER -->
+            <div class="footer custom-footer">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-6 text-left">
+                            <span t-field="company.name"/>
+                            <span t-if="company.website"> - <span t-field="company.website"/></span>
+                        </div>
+                        <div class="col-6 text-right">
+                            Page <span class="page"/> of <span class="topage"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- CUSTOM STYLES -->
+            <style>
+                /* Reset and Base */
+                * {
+                    box-sizing: border-box;
+                }
+                
+                body {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    line-height: 1.6;
+                    color: #333;
+                    background-color: #ffffff;
+                    position: relative;
+                }
+                
+                /* Odoo Background Watermark */
+                body::before {
+                    content: "Odoo";
+                    position: fixed;
+                    bottom: 15%;
+                    left: 50%;
+                    transform: translate(-50%, 0) rotate(-45deg);
+                    font-size: 300px;
+                    font-weight: 200;
+                    color: rgba(135, 90, 123, 0.15);
+                    z-index: -1;
+                    pointer-events: none;
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                }
+                
+                .container-fluid {
+                    padding: 0 30px;
+                }
+                
+                /* Header Styles */
+                .custom-header {
+                    padding: 40px 0 30px 0;
+                    background: linear-gradient(135deg, #6c757d 0%, #875A7B 100%);
+                    border-bottom: 2px solid #875A7B;
+                    color: #ffffff;
+                }
+                
+                .logo-section {
+                    display: flex;
+                    align-items: flex-start;
+                }
+                
+                .logo-placeholder {
+                    background-color: rgba(255, 255, 255, 0.9);
+                    border: 2px dashed rgba(255, 255, 255, 0.6);
+                    border-radius: 8px;
+                    padding: 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-direction: column;
+                    width: 150px;
+                    height: 100px;
+                    backdrop-filter: blur(5px);
+                }
+                
+                .company-logo {
+                    max-width: 150px;
+                    max-height: 100px;
+                    border-radius: 8px;
+                    background-color: rgba(255, 255, 255, 0.9);
+                    padding: 5px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                }
+                
+                .default-logo {
+                    text-align: center;
+                    color: #6c757d;
+                }
+                
+                .default-logo i {
+                    font-size: 24px;
+                    margin-bottom: 5px;
+                    display: block;
+                }
+                
+                .default-logo span {
+                    font-size: 14px;
+                    font-weight: 500;
+                }
+                
+                .company-info-header {
+                    text-align: right;
+                }
+                
+                .company-name {
+                    font-size: 18px;
+                    font-weight: 600;
+                    color: #ffffff;
+                    margin-bottom: 5px;
+                    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+                }
+                
+                .company-country {
+                    font-size: 14px;
+                    color: #f8f9fa;
+                }
+                
+                /* Customer Section */
+                .customer-section {
+                    padding: 30px 0 20px 0;
+                    background-color: #ffffff;
+                }
+                
+                .customer-details {
+                    color: #495057;
+                    line-height: 1.5;
+                }
+                
+                .customer-name {
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #212529;
+                    margin-bottom: 5px;
+                }
+                
+                .address-line {
+                    font-size: 14px;
+                    margin-bottom: 2px;
+                }
+                
+                /* Invoice Title */
+                .invoice-title-section {
+                    padding: 20px 0;
+                    background-color: #ffffff;
+                }
+                
+                .invoice-title {
+                    font-size: 32px;
+                    font-weight: 400;
+                    color: #495057;
+                    margin: 0;
+                    text-align: left;
+                }
+                
+                /* Invoice Details */
+                .invoice-details-section {
+                    padding: 0 0 20px 0;
+                    background-color: #ffffff;
+                }
+                
+                .detail-box {
+                    background-color: #f8f9fa;
+                    padding: 15px 20px;
+                    border-radius: 6px;
+                    margin-bottom: 10px;
+                }
+                
+                .detail-label {
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: #495057;
+                    margin-bottom: 5px;
+                }
+                
+                .detail-value {
+                    font-size: 16px;
+                    font-weight: 500;
+                    color: #212529;
+                }
+                
+                /* Content Area */
+                .article {
+                    background-color: #ffffff;
+                    padding: 0 30px;
+                }
+                
+                /* Payment Section */
+                .payment-section {
+                    padding: 20px 0;
+                    background-color: #ffffff;
+                    border-top: 1px solid #e9ecef;
+                }
+                
+                .payment-terms, .payment-communication {
+                    font-size: 14px;
+                    color: #495057;
+                    margin-bottom: 5px;
+                }
+                
+                .payment-terms span:first-child,
+                .payment-communication span:first-child {
+                    font-weight: 600;
+                }
+                
+                /* Footer */
+                .custom-footer {
+                    padding: 20px 0;
+                    background-color: #ffffff;
+                    border-top: 1px solid #e9ecef;
+                    font-size: 12px;
+                    color: #6c757d;
+                }
+                
+                /* Utility Classes */
+                .text-right { text-align: right !important; }
+                .text-left { text-align: left !important; }
+                .d-flex { display: flex !important; }
+                .align-items-center { align-items: center !important; }
+                .align-items-flex-start { align-items: flex-start !important; }
+                
+                .mb-1 { margin-bottom: 0.25rem !important; }
+                .mb-2 { margin-bottom: 0.5rem !important; }
+                .mb-3 { margin-bottom: 1rem !important; }
+                .mb-5 { margin-bottom: 3rem !important; }
+                .mt-2 { margin-top: 0.5rem !important; }
+                .mt-3 { margin-top: 1rem !important; }
+                .mr-3 { margin-right: 1rem !important; }
+                
+                /* Print Styles */
+                @media print {
+                    body {
+                        background-color: white !important;
+                    }
+                    
+                    .custom-header, .customer-section, .invoice-title-section, 
+                    .invoice-details-section, .article, .payment-section {
+                        background-color: white !important;
+                    }
+                    
+                    .custom-footer {
+                        background-color: white !important;
+                        border-top: 1px solid #333 !important;
+                    }
+                    
+                    .detail-box {
+                        background-color: #f5f5f5 !important;
+                        border: 1px solid #ddd !important;
+                    }
+                    
+                    .logo-placeholder {
+                        border-color: #333 !important;
+                    }
+                }
+                
+                /* Responsive */
+                @media (max-width: 768px) {
+                    .container-fluid {
+                        padding: 0 15px;
+                    }
+                    
+                    .invoice-title {
+                        font-size: 24px;
+                        text-align: center;
+                    }
+                    
+                    .company-info-header {
+                        text-align: center;
+                        margin-top: 20px;
+                    }
+                }
+            </style>
+        </t>
+    </template>
+   
+    <!-- Register the Layout -->
+    <record id="simple_layout_record" model="report.layout">
+        <field name="name">Custom Invoice Style</field>
+        <field name="view_id" ref="external_layout_simple"/>
+        <field name="sequence">99</field>
+    </record>
+</odoo>
